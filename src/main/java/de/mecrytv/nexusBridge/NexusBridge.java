@@ -80,4 +80,7 @@ public class NexusBridge {
     public DatabaseAPI getDatabaseAPI() {
         return databaseAPI;
     }
+    public Path getDataDirectory() {
+        return dataDirectory;
+    }
 }
