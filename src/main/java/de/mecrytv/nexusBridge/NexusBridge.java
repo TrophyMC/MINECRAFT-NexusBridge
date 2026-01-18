@@ -5,13 +5,17 @@ import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
+import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import de.mecrytv.DatabaseAPI;
+import de.mecrytv.nexusBridge.events.ReportTeleportEvent;
 import de.mecrytv.nexusBridge.manager.ConfigManager;
 import de.mecrytv.nexusBridge.models.TeleportModel;
 import de.mecrytv.utils.DatabaseConfig;
 import org.slf4j.Logger;
+
+import java.nio.file.Path;
 
 @Plugin(id = "nexus-bridge", name = "Nexus-Bridge", version = "1.0.0", authors = {"MecryTv"}, description = "A bridge plugin for Nexus-Core")
 public class NexusBridge {
@@ -19,17 +23,19 @@ public class NexusBridge {
     private static NexusBridge instance;
     private final Logger logger;
     private final ProxyServer server;
+    private final Path dataDirectory;
     private final ConfigManager config;
 
     private DatabaseAPI databaseAPI;
     public static final MinecraftChannelIdentifier IDENTIFIER = MinecraftChannelIdentifier.from("nexus:bridge");
 
     @Inject
-    public NexusBridge(Logger logger, ProxyServer server, ConfigManager config) {
+    public NexusBridge(Logger logger, ProxyServer server, @DataDirectory Path dataDirectory) {
         instance = this;
         this.logger = logger;
         this.server = server;
-        this.config = config;
+        this.dataDirectory = dataDirectory;
+        this.config = new ConfigManager(dataDirectory, "config.json");
     }
 
     @Subscribe
@@ -50,6 +56,8 @@ public class NexusBridge {
 
         server.getChannelRegistrar().register(IDENTIFIER);
         DatabaseAPI.getInstance().registerModel("reportteleport", TeleportModel::new);
+
+        server.getEventManager().register(this, new ReportTeleportEvent());
     }
 
     @Subscribe
