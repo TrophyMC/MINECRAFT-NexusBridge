@@ -6,8 +6,10 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import de.mecrytv.DatabaseAPI;
 import de.mecrytv.nexusBridge.manager.ConfigManager;
+import de.mecrytv.nexusBridge.models.TeleportModel;
 import de.mecrytv.utils.DatabaseConfig;
 import org.slf4j.Logger;
 
@@ -20,6 +22,7 @@ public class NexusBridge {
     private final ConfigManager config;
 
     private DatabaseAPI databaseAPI;
+    public static final MinecraftChannelIdentifier IDENTIFIER = MinecraftChannelIdentifier.from("nexus:bridge");
 
     @Inject
     public NexusBridge(Logger logger, ProxyServer server, ConfigManager config) {
@@ -44,6 +47,9 @@ public class NexusBridge {
         );
 
         this.databaseAPI = new DatabaseAPI(dbConfig);
+
+        server.getChannelRegistrar().register(IDENTIFIER);
+        DatabaseAPI.getInstance().registerModel("reportteleport", TeleportModel::new);
     }
 
     @Subscribe
