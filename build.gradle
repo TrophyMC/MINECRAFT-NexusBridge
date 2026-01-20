@@ -31,7 +31,7 @@ dependencies {
     annotationProcessor("com.velocitypowered:velocity-api:3.4.0-SNAPSHOT")
     implementation("dev.httpmarco.polocloud:sdk-java:3.0.0-pre.8-SNAPSHOT")
     implementation 'de.mecrytv:DatabaseAPI:1.2.0'
-    compileOnly 'de.mecrytv:LanguageAPI:1.0.0'
+    implementation 'de.mecrytv:LanguageAPI:1.0.0'
 }
 
 tasks {
