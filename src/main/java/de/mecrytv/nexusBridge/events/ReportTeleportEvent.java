@@ -8,6 +8,7 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import de.mecrytv.DatabaseAPI;
 import de.mecrytv.nexusBridge.NexusBridge;
 import de.mecrytv.nexusBridge.models.TeleportModel;
+import de.mecrytv.nexusBridge.utils.TranslationUtils;
 import dev.httpmarco.polocloud.sdk.java.Polocloud;
 import dev.httpmarco.polocloud.shared.player.PolocloudPlayer;
 import dev.httpmarco.polocloud.shared.player.SharedPlayerProvider;
@@ -42,7 +43,10 @@ public class ReportTeleportEvent {
                  Player staffPlayer = staffPlayerOpt.get();
 
                 playerProvider.findByNameAsync(targetName).thenAccept(player -> {
-                    if (player == null) return;
+                    if (player == null) {
+                        TranslationUtils.sendTranslation(staffPlayer, "messages.report.target_offline", "{target}", targetName);
+                        return;
+                    }
 
                     TeleportModel teleportModel = new TeleportModel(staffUUID.toString(), targetUUID.toString(), targetName);
 
@@ -54,34 +58,9 @@ public class ReportTeleportEvent {
                     staffPlayer.createConnectionRequest(targetServer).fireAndForget();
 
                 });
-             } else if (subChannel.equals("OnlineCheck")) {
-                 UUID staffUUID = UUID.fromString(in.readUTF());
-                 String targetName = in.readUTF();
-
-                 boolean isOnline = NexusBridge.getInstance().getServer().getPlayer(targetName).isPresent();
-
-                 sendOnlineStatus(staffUUID, targetName, isOnline);
              }
          } catch (Exception e) {
              NexusBridge.getInstance().getLogger().error("Error while handling plugin message: " + e.getMessage());
          }
      }
-
-    private void sendOnlineStatus(UUID staffUUID, String targetName, boolean isOnline) {
-        NexusBridge.getInstance().getServer().getPlayer(staffUUID).ifPresent(staff -> {
-            ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(byteOut);
-            try {
-                out.writeUTF("OnlineCheckResponse");
-                out.writeUTF(targetName);
-                out.writeBoolean(isOnline);
-
-                staff.getCurrentServer().ifPresent(server ->
-                        server.sendPluginMessage(NexusBridge.IDENTIFIER, byteOut.toByteArray())
-                );
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-    }
 }
