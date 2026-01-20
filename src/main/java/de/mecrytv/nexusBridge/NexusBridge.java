@@ -9,10 +9,13 @@ import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import de.mecrytv.DatabaseAPI;
+import de.mecrytv.languageapi.LanguageAPI;
 import de.mecrytv.nexusBridge.events.ReportTeleportEvent;
 import de.mecrytv.nexusBridge.manager.ConfigManager;
 import de.mecrytv.nexusBridge.models.TeleportModel;
 import de.mecrytv.utils.DatabaseConfig;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
@@ -27,6 +30,7 @@ public class NexusBridge {
     private final ConfigManager config;
 
     private DatabaseAPI databaseAPI;
+    private LanguageAPI languageAPI;
     public static final MinecraftChannelIdentifier IDENTIFIER = MinecraftChannelIdentifier.from("nexus:bridge");
 
     @Inject
@@ -40,6 +44,8 @@ public class NexusBridge {
 
     @Subscribe
     public void onProxyInitialization(ProxyInitializeEvent event) {
+        Path langDir = Path.of("/home/minecraft/languages/");
+        this.languageAPI = new LanguageAPI(langDir);
 
         DatabaseConfig dbConfig = new DatabaseConfig(
                 config.getString("mariadb.host"),
@@ -80,7 +86,23 @@ public class NexusBridge {
     public DatabaseAPI getDatabaseAPI() {
         return databaseAPI;
     }
+    public LanguageAPI getLanguageAPI() {
+        return languageAPI;
+    }
     public Path getDataDirectory() {
         return dataDirectory;
+    }
+    public Component getPrefix() {
+        if (!this.config.contains("prefix")) {
+            return MiniMessage.miniMessage().deserialize("<dark_grey>[<gold>Moderation<dark_grey>] ");
+        }
+
+        String prefixRaw = this.config.getString("prefix");
+
+        if (prefixRaw == null || prefixRaw.isEmpty()) {
+            return MiniMessage.miniMessage().deserialize("<dark_grey>[<gold>Moderation<dark_grey>] ");
+        }
+
+        return MiniMessage.miniMessage().deserialize(prefixRaw);
     }
 }
