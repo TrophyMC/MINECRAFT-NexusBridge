@@ -48,7 +48,7 @@ public class ReportTeleportEvent {
                     TeleportModel teleportModel = new TeleportModel(staffUUID.toString(), targetUUID.toString(), targetName);
 
                     DatabaseAPI.set("reportteleport", teleportModel);
-                    String targetServerName = player.getCurrentServiceName();
+                    String targetServerName = player.getCurrentServerName();
 
                     Optional<RegisteredServer> targetServerOpt = NexusBridge.getInstance().getServer().getServer(targetServerName);
                     RegisteredServer targetServer = targetServerOpt.get();
