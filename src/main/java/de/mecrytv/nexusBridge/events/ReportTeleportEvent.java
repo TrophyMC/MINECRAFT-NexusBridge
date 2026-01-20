@@ -12,8 +12,7 @@ import dev.httpmarco.polocloud.sdk.java.Polocloud;
 import dev.httpmarco.polocloud.shared.player.PolocloudPlayer;
 import dev.httpmarco.polocloud.shared.player.SharedPlayerProvider;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
+import java.io.*;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -55,9 +54,34 @@ public class ReportTeleportEvent {
                     staffPlayer.createConnectionRequest(targetServer).fireAndForget();
 
                 });
+             } else if (subChannel.equals("OnlineCheck")) {
+                 UUID staffUUID = UUID.fromString(in.readUTF());
+                 String targetName = in.readUTF();
+
+                 boolean isOnline = NexusBridge.getInstance().getServer().getPlayer(targetName).isPresent();
+
+                 sendOnlineStatus(staffUUID, targetName, isOnline);
              }
          } catch (Exception e) {
              NexusBridge.getInstance().getLogger().error("Error while handling plugin message: " + e.getMessage());
          }
      }
+
+    private void sendOnlineStatus(UUID staffUUID, String targetName, boolean isOnline) {
+        NexusBridge.getInstance().getServer().getPlayer(staffUUID).ifPresent(staff -> {
+            ByteArrayOutputStream byteOut = new ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(byteOut);
+            try {
+                out.writeUTF("OnlineCheckResponse");
+                out.writeUTF(targetName);
+                out.writeBoolean(isOnline);
+
+                staff.getCurrentServer().ifPresent(server ->
+                        server.sendPluginMessage(NexusBridge.IDENTIFIER, byteOut.toByteArray())
+                );
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
 }
