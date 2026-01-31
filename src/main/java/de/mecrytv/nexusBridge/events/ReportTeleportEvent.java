@@ -5,10 +5,10 @@ import com.velocitypowered.api.event.connection.PluginMessageEvent;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import de.mecrytv.DatabaseAPI;
 import de.mecrytv.nexusBridge.NexusBridge;
-import de.mecrytv.nexusBridge.models.TeleportModel;
 import de.mecrytv.nexusBridge.utils.TranslationUtils;
+import de.mecrytv.nexusapi.NexusAPI;
+import de.mecrytv.nexusapi.models.TeleportModel;
 import dev.httpmarco.polocloud.sdk.java.Polocloud;
 import dev.httpmarco.polocloud.shared.player.PolocloudPlayer;
 import dev.httpmarco.polocloud.shared.player.SharedPlayerProvider;
@@ -20,27 +20,28 @@ import java.util.UUID;
 public class ReportTeleportEvent {
 
     public static final MinecraftChannelIdentifier IDENTIFIER = MinecraftChannelIdentifier.from("nexus:bridge");
+    @SuppressWarnings("unchecked")
     SharedPlayerProvider<PolocloudPlayer> playerProvider = (SharedPlayerProvider<PolocloudPlayer>) Polocloud.instance().playerProvider();
 
-     @Subscribe
-    public void onPluginMessage(PluginMessageEvent event){
-         if (!event.getIdentifier().equals(IDENTIFIER)) return;
+    @Subscribe
+    public void onPluginMessage(PluginMessageEvent event) {
+        if (!event.getIdentifier().equals(IDENTIFIER)) return;
 
-         DataInputStream in = new DataInputStream(new ByteArrayInputStream(event.getData()));
+        DataInputStream in = new DataInputStream(new ByteArrayInputStream(event.getData()));
 
-         try {
-             String subChannel = in.readUTF();
-             if (subChannel.equals("TeleportRequest")){
-                 UUID staffUUID = UUID.fromString(in.readUTF());
-                 UUID targetUUID = UUID.fromString(in.readUTF());
-                 String targetName = in.readUTF();
+        try {
+            String subChannel = in.readUTF();
+            if (subChannel.equals("TeleportRequest")) {
+                UUID staffUUID = UUID.fromString(in.readUTF());
+                UUID targetUUID = UUID.fromString(in.readUTF());
+                String targetName = in.readUTF();
 
-                 Optional<Player> staffPlayerOpt = NexusBridge.getInstance().getServer().getPlayer(staffUUID);
-                 if (staffPlayerOpt.isEmpty()) {
-                     NexusBridge.getInstance().getLogger().warn("Staff player not found: " + staffUUID);
-                     return;
-                 }
-                 Player staffPlayer = staffPlayerOpt.get();
+                Optional<Player> staffPlayerOpt = NexusBridge.getInstance().getServer().getPlayer(staffUUID);
+                if (staffPlayerOpt.isEmpty()) {
+                    NexusBridge.getInstance().getLogger().warn("Staff player not found: " + staffUUID);
+                    return;
+                }
+                Player staffPlayer = staffPlayerOpt.get();
 
                 playerProvider.findByNameAsync(targetName).thenAccept(player -> {
                     if (player == null) {
@@ -50,17 +51,20 @@ public class ReportTeleportEvent {
 
                     TeleportModel teleportModel = new TeleportModel(staffUUID.toString(), targetUUID.toString(), targetName);
 
-                    DatabaseAPI.set("reportteleport", teleportModel);
+                    NexusAPI.getInstance().getRepoManager().getTeleportRepository().save(teleportModel);
+
                     String targetServerName = player.getCurrentServerName();
-
                     Optional<RegisteredServer> targetServerOpt = NexusBridge.getInstance().getServer().getServer(targetServerName);
-                    RegisteredServer targetServer = targetServerOpt.get();
-                    staffPlayer.createConnectionRequest(targetServer).fireAndForget();
 
+                    if (targetServerOpt.isPresent()) {
+                        staffPlayer.createConnectionRequest(targetServerOpt.get()).fireAndForget();
+                    } else {
+                        NexusBridge.getInstance().getLogger().error("Target server not found on proxy: " + targetServerName);
+                    }
                 });
-             }
-         } catch (Exception e) {
-             NexusBridge.getInstance().getLogger().error("Error while handling plugin message: " + e.getMessage());
-         }
-     }
+            }
+        } catch (Exception e) {
+            NexusBridge.getInstance().getLogger().error("Error while handling plugin message: " + e.getMessage());
+        }
+    }
 }

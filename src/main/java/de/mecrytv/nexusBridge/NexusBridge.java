@@ -6,14 +6,15 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
-import de.mecrytv.DatabaseAPI;
+import de.mecrytv.databaseapi.DatabaseAPI;
+import de.mecrytv.databaseapi.utils.DatabaseConfig;
 import de.mecrytv.languageapi.LanguageAPI;
 import de.mecrytv.nexusBridge.events.ReportTeleportEvent;
 import de.mecrytv.nexusBridge.manager.ConfigManager;
-import de.mecrytv.nexusBridge.models.TeleportModel;
-import de.mecrytv.utils.DatabaseConfig;
+import de.mecrytv.nexusapi.NexusAPI;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.slf4j.Logger;
@@ -61,14 +62,29 @@ public class NexusBridge {
         this.databaseAPI = new DatabaseAPI(dbConfig);
 
         server.getChannelRegistrar().register(IDENTIFIER);
-        DatabaseAPI.getInstance().registerModel("reportteleport", TeleportModel::new);
-
         server.getEventManager().register(this, new ReportTeleportEvent());
+
+        registerGlobalStaffListener();
     }
 
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
         if (databaseAPI != null) databaseAPI.shutdown();
+    }
+
+    private void registerGlobalStaffListener() {
+        NexusAPI.getInstance().getGlobalNotifyer().listen(this.languageAPI, (permission, component) -> {
+
+            Component finalMessage = getPrefix().append(component);
+
+            for (Player player : server.getAllPlayers()) {
+                if (player.hasPermission(permission)) {
+                    player.sendMessage(finalMessage);
+                }
+            }
+
+            logger.info("[GlobalNotify] Nachricht an Team gesendet: " + permission);
+        });
     }
 
     public static NexusBridge getInstance() {
