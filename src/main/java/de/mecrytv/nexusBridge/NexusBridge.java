@@ -4,6 +4,7 @@ import com.google.inject.Inject;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
+import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.Player;
@@ -20,8 +21,15 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.slf4j.Logger;
 
 import java.nio.file.Path;
+import java.util.concurrent.TimeUnit;
 
-@Plugin(id = "nexus-bridge", name = "Nexus-Bridge", version = "1.0.0", authors = {"MecryTv"}, description = "A bridge plugin for Nexus-Core")
+@Plugin(
+        id = "nexus-bridge",
+        name = "Nexus-Bridge",
+        version = "1.0.0",
+        authors = {"MecryTv"},
+        description = "A bridge plugin for Nexus-Core"
+)
 public class NexusBridge {
 
     private static NexusBridge instance;
@@ -61,10 +69,12 @@ public class NexusBridge {
 
         this.databaseAPI = new DatabaseAPI(dbConfig);
 
+        NexusAPI.getInstance().init();
+
         server.getChannelRegistrar().register(IDENTIFIER);
         server.getEventManager().register(this, new ReportTeleportEvent());
 
-        registerGlobalStaffListener();
+        server.getScheduler().buildTask(this, this::registerGlobalStaffListener).delay(15, TimeUnit.SECONDS).schedule();
     }
 
     @Subscribe
@@ -73,7 +83,14 @@ public class NexusBridge {
     }
 
     private void registerGlobalStaffListener() {
-        NexusAPI.getInstance().getGlobalNotifyer().listen(this.languageAPI, (permission, component) -> {
+        NexusAPI nexus = NexusAPI.getInstance();
+
+        if (nexus == null || nexus.getGlobalNotifyer() == null) {
+            logger.error("!!! NexusAPI oder GlobalNotifyer ist NULL. Listener konnte nicht registriert werden.");
+            return;
+        }
+
+        nexus.getGlobalNotifyer().listen(this.languageAPI, (permission, component) -> {
 
             Component finalMessage = getPrefix().append(component);
 
