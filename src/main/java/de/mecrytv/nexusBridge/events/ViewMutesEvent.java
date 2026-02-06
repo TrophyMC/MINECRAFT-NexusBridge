@@ -36,7 +36,7 @@ public class ViewMutesEvent {
                     String timeString = (mute.getMuteExpires() == -1) ? "Permanent" : TimeUtils.formatDuration(remaining);
                     String reason = mute.getReason();
 
-                    sendBoxMessage(player, "messages.mute.blocked",
+                    sendBoxMessage(player, "messages.blocked.mute",
                             "{reason}", reason,
                             "{time}", timeString);
 
