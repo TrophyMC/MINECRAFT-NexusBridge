@@ -32,7 +32,7 @@ dependencies {
     implementation("dev.httpmarco.polocloud:sdk-java:3.0.0-pre.8-SNAPSHOT")
     implementation 'de.mecrytv.databaseapi:DatabaseAPI:1.2.4'
     implementation 'de.mecrytv:LanguageAPI:1.0.0'
-    implementation 'de.mecrytv.nexusapi:NexusAPI:1.0.1'
+    implementation 'de.mecrytv.nexusapi:NexusAPI:1.0.2'
 }
 
 tasks {
