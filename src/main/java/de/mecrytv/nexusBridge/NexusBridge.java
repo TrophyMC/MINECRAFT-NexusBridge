@@ -14,6 +14,7 @@ import de.mecrytv.databaseapi.DatabaseAPI;
 import de.mecrytv.databaseapi.utils.DatabaseConfig;
 import de.mecrytv.languageapi.LanguageAPI;
 import de.mecrytv.nexusBridge.events.ReportTeleportEvent;
+import de.mecrytv.nexusBridge.events.ViewMutesEvent;
 import de.mecrytv.nexusBridge.manager.ConfigManager;
 import de.mecrytv.nexusapi.NexusAPI;
 import net.kyori.adventure.text.Component;
@@ -73,6 +74,7 @@ public class NexusBridge {
 
         server.getChannelRegistrar().register(IDENTIFIER);
         server.getEventManager().register(this, new ReportTeleportEvent());
+        server.getEventManager().register(this, new ViewMutesEvent());
 
         server.getScheduler().buildTask(this, this::registerGlobalStaffListener).delay(15, TimeUnit.SECONDS).schedule();
     }
